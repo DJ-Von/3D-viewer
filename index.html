@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Лаба по 3D</title>
+        <script type="text/javascript"
+            src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js">
+        </script>
+    </head>
+    <body>
+        <style>
+            body {
+                margin: 0;
+                overflow: hidden;
+            }
+
+            #WebGL-output {width: 100%; height: 100vh;}
+        </style>
+        <!--В данный эелемент будет выводиться изображение-->
+        <div id="WebGL-output"></div>
+
+        <script type="importmap">
+            {
+                "imports": {
+                    "three": "./three.js/build/three.module.js",
+                    "OrbitControls": "./three.js/examples/jsm/controls/OrbitControls.js",
+                    "GLTFLoader": "./three.js/examples/jsm/loaders/GLTFLoader.js",
+                    "RectAreaLightUniformsLib": "./three.js/examples/jsm/lights/RectAreaLightUniformsLib.js"
+                }
+            }
+        </script>
+
+        <script type="module">
+            import * as THREE from 'three';
+            import { OrbitControls } from 'OrbitControls';
+            import { GLTFLoader } from 'GLTFLoader';
+            import { RectAreaLightUniformsLib } from 'RectAreaLightUniformsLib';
+
+            function init() {
+                //Scene
+                const scene = new THREE.Scene()
+                scene.background = new THREE.Color ("E2DFE1");
+
+                //Camera
+                const camera = new THREE.PerspectiveCamera (74, window.innerWidth / window.innerHeight, 0.1, 3000);
+                camera.position.set(3, 2, 1)
+                
+                //Renderer
+                const renderer = new THREE.WebGLRenderer({antialias: true})
+                renderer.setSize (window.innerWidth, window.innerHeight)
+                $("#WebGL-output").append(renderer.domElement);
+
+                //Model
+                {
+                    const loader = new GLTFLoader();
+                    loader.load('./model/RobotExpressive.glb', gltf => {
+                        scene.add(gltf.scene);
+                    },
+                        function (error) {
+                            console.log('Error: ' + error)
+                        }
+                    )
+                }
+
+            RectAreaLightUniformsLib.init();
+            {
+                //RectAreaLight (color : Integer, intensity : Float, width : Float)
+                const rectLight = new THREE.RectAreaLight(0xffffff, 1, 300, 300);
+                rectLight.position.set (-30, -10, 10)
+                rectLight.rotation.y = -Math.PI/4;
+                scene.add(rectLight)
+            }
+
+            {
+                const rectLight = new THREE.RectAreaLight (0xffffff, 1, 100, 100);
+                rectLight.position.set(10, 0, 0)
+                rectLight.rotation.y = Math.PI - Math.PI/4;
+                scene.add(rectLight)
+            }
+
+            //OrbitControls
+            const controls = new OrbitControls(camera, renderer.domElement);
+            controls.autoRotate = true;
+            controls.autoRotateSpeed = 5;
+            controls.enableDamping = true;
+
+            //Resize
+            window.addEventListener('resize', onWindowResize, false)
+
+            function onWindowResize() {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight)
+            }
+
+            //Animate
+            function render(){
+                requestAnimationFrame(render)
+                controls.update();
+                renderer.render(scene, camera)
+            }
+            render()
+            }
+
+            init()
+        </script>
+    </body>
+</html>
